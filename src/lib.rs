@@ -68,16 +68,13 @@ impl Parse for TraitSet {
 }
 
 struct ManyTraitSet {
-    // _brace_token: token::Brace,
     entries: Punctuated<TraitSet, Token![;]>,
 }
 
 
 impl Parse for ManyTraitSet {
     fn parse(input: ParseStream) -> Result<Self> {
-        // let content;
         Ok(ManyTraitSet {
-            // _brace_token: braced!(content in input),
             entries: input.parse_terminated(TraitSet::parse)?,
         })
     }
@@ -96,10 +93,5 @@ impl ManyTraitSet {
 #[proc_macro]
 pub fn trait_set(tokens: TokenStream) -> TokenStream {
     let input = parse_macro_input!(tokens as ManyTraitSet);
-    let rendered = input.render();
-    let result = TokenStream::from(rendered);
-
-    // panic!("Result is: {}", result);
-
-    result
+    input.render().into()
 }
