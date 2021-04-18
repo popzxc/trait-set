@@ -1,5 +1,5 @@
 error[E0277]: `RefCell<u8>` cannot be shared between threads safely
-  --> $DIR/bound_failure.rs:11:10
+  --> $DIR/01_bound_failure.rs:11:10
    |
 8  | fn test<T: ThreadSafe>(_t: T) {}
    |            ---------- required by this bound in `test`
