@@ -168,13 +168,16 @@ mod serde_hrtb {
     
     trait_set!{
         pub trait Serde = Serialize + for<'de> Deserialize<'de>;
+        pub trait SerdeLifetimeTemplate<'de> = Serialize + Deserialize<'de>;
     }
 
     fn test_set<T: Serde>(_arg: T) {}
+    fn test_template<'de, T: SerdeLifetimeTemplate<'de>>(_arg: T) {}
 
     #[test]
     fn it_compiles() {
         test_set(0u8);
+        test_template(0u8);
     }
 }
 

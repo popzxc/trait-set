@@ -44,7 +44,7 @@ impl TraitSet {
         quote! {
             #visibility trait #alias_name<#generics>: #bounds {}
 
-            impl<_INNER, #generics> #alias_name<#generics> for _INNER where _INNER: #bounds {}
+            impl<#generics, _INNER> #alias_name<#generics> for _INNER where _INNER: #bounds {}
         }
     }
 }
