@@ -1,3 +1,27 @@
+//! This crate provide support for [trait aliases][alias]: a feature
+//! that is already supported by Rust compiler, but is [not stable][tracking_issue]
+//! yet.
+//!
+//! The idea is simple: combine group of traits under a single name. The simplest
+//! example will be:
+//!
+//! ```rust
+//! use trait_set::trait_set;
+//!
+//! trait_set! {
+//!     pub trait ThreadSafe = Send + Sync;
+//! }
+//! ```
+//!
+//! Macro [`trait_set`] displayed here is the main entity of the crate:
+//! it allows declaring multiple trait aliases, each of them is represented
+//! as `[visibility] trait [AliasName][<generics>] = [Element1] + [Element2] + ... + [ElementN];`.
+//!
+//! For more details, see the [`trait_set`] macro documentation.
+//!
+//! [alias]: https://doc.rust-lang.org/unstable-book/language-features/trait-alias.html
+//! [tracking_issue]: https://github.com/rust-lang/rust/issues/41517
+
 extern crate proc_macro;
 
 use proc_macro::{TokenStream};
@@ -90,6 +114,86 @@ impl ManyTraitSet {
     }
 }
 
+/// Creates an alias for set of traits.
+///
+/// To demonstrate the idea, see the examples:
+///
+/// ```rust
+/// use trait_set::trait_set;
+///
+/// trait_set! {
+///     pub trait ThreadSafe = Send + Sync;
+///     pub trait ThreadSafeIterator<T> = ThreadSafe + Iterator<Item = T>;
+///     pub trait ThreadSafeBytesIterator = ThreadSafeIterator<u8>;
+///     pub trait StaticDebug = 'static + std::fmt::Debug;
+/// }
+///```
+///
+/// This macro also supports [higher-rank trait bound][hrtb]:
+///
+/// ```rust
+/// # pub trait Serializer {
+/// #     type Ok;
+/// #     type Error;
+/// # 
+/// #     fn ok_value() -> Self::Ok;
+/// # }
+/// # pub trait Deserializer<'de> {
+/// #     type Error;
+/// # }
+/// # 
+/// # pub trait Serialize {
+/// #     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+/// #     where
+/// #         S: Serializer;
+/// # }
+/// # 
+/// # pub trait Deserialize<'de>: Sized {
+/// #     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+/// #     where
+/// #         D: Deserializer<'de>;
+/// # }
+/// # 
+/// # impl Serializer for u8 {
+/// #     type Ok = ();
+/// #     type Error = ();
+/// # 
+/// #     fn ok_value() -> Self::Ok {
+/// #         ()
+/// #     }
+/// # }
+/// # 
+/// # impl<'de> Deserializer<'de> for u8 {
+/// #     type Error = ();
+/// # }
+/// # 
+/// # impl Serialize for u8 {
+/// #     fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
+/// #     where
+/// #         S: Serializer
+/// #     {
+/// #         Ok(S::ok_value())
+/// #     }
+/// # }
+/// # 
+/// # impl<'de> Deserialize<'de> for u8 {
+/// #     fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
+/// #     where
+/// #         D: Deserializer<'de>
+/// #         {
+/// #             Ok(0u8)
+/// #         }
+/// # }
+/// use trait_set::trait_set;
+/// 
+/// trait_set!{
+///     pub trait Serde = Serialize + for<'de> Deserialize<'de>;
+///     // Note that you can also use lifetimes as a generic parameter.
+///     pub trait SerdeLifetimeTemplate<'de> = Serialize + Deserialize<'de>;
+/// }
+/// ```
+///
+/// [hrtb]: https://doc.rust-lang.org/nomicon/hrtb.html
 #[proc_macro]
 pub fn trait_set(tokens: TokenStream) -> TokenStream {
     let input = parse_macro_input!(tokens as ManyTraitSet);
