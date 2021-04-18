@@ -1,5 +1,6 @@
 use trait_set::trait_set;
 
+/// Tests the simplest possible combination of traits.
 mod simple {
     use super::*;
 
@@ -16,7 +17,8 @@ mod simple {
     }
 }
 
-mod complex {
+/// Checks that traits with associated types can be used in alias.
+mod associated_types {
     use super::*;
 
     trait_set!{
@@ -32,6 +34,7 @@ mod complex {
     }
 }
 
+/// Checks that generic aliases are processed as expected.
 mod generic {
     use super::*;
 
@@ -48,6 +51,7 @@ mod generic {
     }
 }
 
+/// Checks that lifetime bounds are accepted.
 mod lifetimes {
     use super::*;
 
@@ -64,6 +68,7 @@ mod lifetimes {
     }
 }
 
+/// Checks that multiple aliases can exist within one `trait_set` call.
 mod multiple {
     use super::*;
 
@@ -85,6 +90,7 @@ mod multiple {
     }
 }
 
+/// Checks that aliases can be combined between each other into a new alias.
 mod combination {
     use super::*;
 
@@ -102,7 +108,9 @@ mod combination {
     }
 }
 
-mod serde {
+/// Checks the complex serde-inspired example with
+/// higher-ranked trait bounds.
+mod serde_hrtb {
     use super::*;
 
     pub trait Serializer {
@@ -167,5 +175,30 @@ mod serde {
     #[test]
     fn it_compiles() {
         test_set(0u8);
+    }
+}
+
+/// Checks that aliases for the same set are interoperable between
+/// each other and with plain trait combination.
+mod interoperability {
+    use super::*;
+
+    trait_set!{
+        pub(crate) trait TraitSet1 = Send + Sync;
+        pub(crate) trait TraitSet2 = Send + Sync;
+    }    
+
+    fn test_set1<T: TraitSet1>(arg: T) {
+        test_set2(arg)
+    }
+    fn test_set2<T: TraitSet2>(arg: T) {
+        test_set3(arg)
+    }
+    fn test_set3<T: Send + Sync>(_arg: T) {}
+
+    #[test]
+    fn it_compiles() {
+        test_set1(10u8);
+        test_set1("hello");
     }
 }
