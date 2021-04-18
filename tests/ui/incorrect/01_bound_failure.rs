@@ -1,3 +1,5 @@
+//! Checks that trait violation is correctly rendered in error.
+
 use trait_set::trait_set;
 use std::cell::RefCell;
 
