@@ -29,24 +29,32 @@
 
 extern crate proc_macro;
 
-use proc_macro::{TokenStream};
-use syn::{Generics, Ident, Result, Token, TypeTraitObject, Visibility, parse_macro_input, spanned::Spanned};
-use syn::parse::{Parse, ParseStream, Error};
-use syn::punctuated::Punctuated;
-use quote::{quote};
+use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
+use quote::quote;
+use syn::parse::{Error, Parse, ParseStream};
+use syn::punctuated::Punctuated;
+use syn::{
+    parse_macro_input, spanned::Spanned, Generics, Ident, Result, Token, TypeTraitObject,
+    Visibility,
+};
 
+/// Represents one trait alias.
 struct TraitSet {
     visibility: Visibility,
     _trait_token: Token![trait],
     alias_name: Ident,
     generics: Generics,
     _eq_token: Token![=],
-    traits: TypeTraitObject
+    traits: TypeTraitObject,
 }
 
 impl TraitSet {
+    /// Renders trait alias into a new trait with bounds set.
     fn render(self) -> TokenStream2 {
+        // Generic and non-generic implementation have slightly different
+        // syntax, so it's simpler to process them individually rather than
+        // try to generalize implementation.
         if self.generics.params.is_empty() {
             self.render_non_generic()
         } else {
@@ -54,6 +62,7 @@ impl TraitSet {
         }
     }
 
+    /// Renders the trait alias without generic parameters.
     fn render_non_generic(self) -> TokenStream2 {
         let visibility = self.visibility;
         let alias_name = self.alias_name;
@@ -65,11 +74,15 @@ impl TraitSet {
         }
     }
 
+    /// Renders the trait alias with generic parameters.
     fn render_generic(self) -> TokenStream2 {
         let visibility = self.visibility;
         let alias_name = self.alias_name;
         let bounds = self.traits.bounds;
         let generics = self.generics.params;
+        // Note that it's important for `_INNER` to go *after* user-defined
+        // generics, because generics can contain lifetimes, and lifetimes
+        // should always go first.
         quote! {
             #visibility trait #alias_name<#generics>: #bounds {}
 
@@ -90,16 +103,19 @@ impl Parse for TraitSet {
         };
 
         if let Some(where_clause) = result.generics.where_clause {
-            return Err(Error::new(where_clause.span(), "Where clause is not allowed for trait alias"));
+            return Err(Error::new(
+                where_clause.span(),
+                "Where clause is not allowed for trait alias",
+            ));
         }
         Ok(result)
     }
 }
 
+/// Represents a sequence of trait aliases delimited by semicolon.
 struct ManyTraitSet {
     entries: Punctuated<TraitSet, Token![;]>,
 }
-
 
 impl Parse for ManyTraitSet {
     fn parse(input: ParseStream) -> Result<Self> {
@@ -140,38 +156,38 @@ impl ManyTraitSet {
 /// # pub trait Serializer {
 /// #     type Ok;
 /// #     type Error;
-/// # 
+/// #
 /// #     fn ok_value() -> Self::Ok;
 /// # }
 /// # pub trait Deserializer<'de> {
 /// #     type Error;
 /// # }
-/// # 
+/// #
 /// # pub trait Serialize {
 /// #     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 /// #     where
 /// #         S: Serializer;
 /// # }
-/// # 
+/// #
 /// # pub trait Deserialize<'de>: Sized {
 /// #     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
 /// #     where
 /// #         D: Deserializer<'de>;
 /// # }
-/// # 
+/// #
 /// # impl Serializer for u8 {
 /// #     type Ok = ();
 /// #     type Error = ();
-/// # 
+/// #
 /// #     fn ok_value() -> Self::Ok {
 /// #         ()
 /// #     }
 /// # }
-/// # 
+/// #
 /// # impl<'de> Deserializer<'de> for u8 {
 /// #     type Error = ();
 /// # }
-/// # 
+/// #
 /// # impl Serialize for u8 {
 /// #     fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
 /// #     where
@@ -180,7 +196,7 @@ impl ManyTraitSet {
 /// #         Ok(S::ok_value())
 /// #     }
 /// # }
-/// # 
+/// #
 /// # impl<'de> Deserialize<'de> for u8 {
 /// #     fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
 /// #     where
@@ -190,7 +206,7 @@ impl ManyTraitSet {
 /// #         }
 /// # }
 /// use trait_set::trait_set;
-/// 
+///
 /// trait_set!{
 ///     pub trait Serde = Serialize + for<'de> Deserialize<'de>;
 ///     // Note that you can also use lifetimes as a generic parameter.
