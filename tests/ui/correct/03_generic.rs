@@ -12,11 +12,11 @@ impl GenericTrait<u8> for u8 {
     }
 }
 
-trait_set!{
+trait_set! {
     pub(crate) trait GenericIterator<T> = Iterator<Item = T>;
     pub(crate) trait GenericFoo<T> = GenericTrait<T>;
     pub(crate) trait SpecializedFoo = GenericTrait<u8>;
-}    
+}
 
 fn test_set<T: GenericIterator<u8>>(_arg: T) {}
 fn test_generic<T: GenericFoo<u8>>(_arg: T) {}

@@ -2,9 +2,9 @@
 
 use trait_set::trait_set;
 
-trait_set!{
+trait_set! {
     pub(crate) trait BytesIterator = Iterator<Item = u8>;
-}    
+}
 
 fn test_set<T: BytesIterator>(_arg: T) {}
 

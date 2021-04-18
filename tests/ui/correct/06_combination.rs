@@ -2,11 +2,11 @@
 
 use trait_set::trait_set;
 
-trait_set!{
+trait_set! {
     pub trait ThreadSafe = Send + Sync;
     pub trait BytesIterator = Iterator<Item = u8>;
     pub trait ThreadSafeBytesIterator = ThreadSafe + BytesIterator;
-}    
+}
 
 fn test_set<T: ThreadSafeBytesIterator>(_arg: T) {}
 

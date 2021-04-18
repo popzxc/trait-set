@@ -41,7 +41,7 @@ impl<'de> Deserializer<'de> for u8 {
 impl Serialize for u8 {
     fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         Ok(S::ok_value())
     }
@@ -50,13 +50,13 @@ impl Serialize for u8 {
 impl<'de> Deserialize<'de> for u8 {
     fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>
-        {
-            Ok(0u8)
-        }
+        D: Deserializer<'de>,
+    {
+        Ok(0u8)
+    }
 }
 
-trait_set!{
+trait_set! {
     pub trait Serde = Serialize + for<'de> Deserialize<'de>;
     pub trait SerdeLifetimeTemplate<'de> = Serialize + Deserialize<'de>;
 }

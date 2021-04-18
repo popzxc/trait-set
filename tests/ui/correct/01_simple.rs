@@ -2,9 +2,9 @@
 
 use trait_set::trait_set;
 
-trait_set!{
+trait_set! {
     pub(crate) trait TraitSet = Send + Sync;
-}    
+}
 
 fn test_set<T: TraitSet>(_arg: T) {}
 

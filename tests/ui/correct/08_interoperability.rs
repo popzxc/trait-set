@@ -3,10 +3,10 @@
 
 use trait_set::trait_set;
 
-trait_set!{
+trait_set! {
     pub(crate) trait TraitSet1 = Send + Sync;
     pub(crate) trait TraitSet2 = Send + Sync;
-}    
+}
 
 fn test_set1<T: TraitSet1>(arg: T) {
     test_set2(arg)

@@ -2,11 +2,11 @@
 
 use trait_set::trait_set;
 
-trait_set!{
+trait_set! {
     pub(crate) trait TraitSet = Send + Sync;
     pub trait BytesIterator = Iterator<Item = u8>;
     trait GenericIterator<T> = Iterator<Item = T>;
-}    
+}
 
 fn test_set<T: TraitSet>(_arg: T) {}
 fn test_iter<T: BytesIterator>(_arg: T) {}

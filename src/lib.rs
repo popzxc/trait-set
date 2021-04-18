@@ -29,14 +29,17 @@
 
 extern crate proc_macro;
 
+use std::iter::FromIterator;
+
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::parse::{Error, Parse, ParseStream};
-use syn::punctuated::Punctuated;
 use syn::{
-    parse_macro_input, spanned::Spanned, Generics, Ident, Result, Token, TypeTraitObject,
-    Visibility,
+    parse::{Error, Parse, ParseStream},
+    parse_macro_input,
+    punctuated::Punctuated,
+    spanned::Spanned,
+    Generics, Ident, Result, Token, TypeTraitObject, Visibility,
 };
 
 /// Represents one trait alias.
@@ -127,11 +130,7 @@ impl Parse for ManyTraitSet {
 
 impl ManyTraitSet {
     fn render(self) -> TokenStream2 {
-        let entries = self.entries.into_iter().map(|entry| entry.render());
-
-        quote! {
-            #(#entries)*
-        }
+        TokenStream2::from_iter(self.entries.into_iter().map(|entry| entry.render()))
     }
 }
 
