@@ -62,6 +62,9 @@ trait_set! {
 
     // Lifetime as a generic parameter.
     pub trait SerdeLifetimeTemplate<'de> = Serialize + Deserialize<'de>;
+    
+    // Trait bounds on generic parameters for an alias.
+    pub trait GenericIteratorSendableT<T: Send> = Iterator<Item = T>;
 }
 ```
 
