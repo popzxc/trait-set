@@ -1,6 +1,8 @@
 # Changelog
 
-## Version 0.2.0 (202x-xx-xx)
+## Version 0.x.y (202x-xx-xx)
+
+## Version 0.2.0 (2021-05-25)
 
 - Support for trait bounds on generic params for the alias was added.
 
