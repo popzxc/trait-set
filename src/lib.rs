@@ -39,7 +39,7 @@ use syn::{
     parse_macro_input,
     punctuated::Punctuated,
     spanned::Spanned,
-    Generics, Ident, Result, Token, TypeTraitObject, Visibility,
+    GenericParam, Generics, Ident, Result, Token, TypeTraitObject, Visibility,
 };
 
 /// Represents one trait alias.
@@ -82,14 +82,29 @@ impl TraitSet {
         let visibility = self.visibility;
         let alias_name = self.alias_name;
         let bounds = self.traits.bounds;
-        let generics = self.generics.params;
+
+        // We differentiate `generics` and `bound_generics` because in the
+        // `impl<X> Trait<Y>` block there must be no trait bounds in the `<Y>` part,
+        // they must go into `<X>` part only.
+        // E.g. `impl<X: Send, _INNER> Trait<X> for _INNER`.
+        let mut unbound_generics = self.generics.clone();
+        for param in unbound_generics.params.iter_mut() {
+            if let GenericParam::Type(ty) = param {
+                if !ty.bounds.is_empty() {
+                    ty.bounds.clear();
+                }
+            }
+        }
+        let unbound_generics = unbound_generics.params;
+        let bound_generics = self.generics.params;
+
         // Note that it's important for `_INNER` to go *after* user-defined
         // generics, because generics can contain lifetimes, and lifetimes
         // should always go first.
         quote! {
-            #visibility trait #alias_name<#generics>: #bounds {}
+            #visibility trait #alias_name<#bound_generics>: #bounds {}
 
-            impl<#generics, _INNER> #alias_name<#generics> for _INNER where _INNER: #bounds {}
+            impl<#bound_generics, _INNER> #alias_name<#unbound_generics> for _INNER where _INNER: #bounds {}
         }
     }
 }
