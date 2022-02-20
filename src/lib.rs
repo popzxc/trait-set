@@ -39,11 +39,13 @@ use syn::{
     parse_macro_input,
     punctuated::Punctuated,
     spanned::Spanned,
-    GenericParam, Generics, Ident, Result, Token, TypeTraitObject, Visibility,
+    Attribute, GenericParam, Generics, Ident, Lit, Meta, MetaNameValue, Result, Token,
+    TypeTraitObject, Visibility,
 };
 
 /// Represents one trait alias.
 struct TraitSet {
+    doc_comment: Option<String>,
     visibility: Visibility,
     _trait_token: Token![trait],
     alias_name: Ident,
@@ -53,6 +55,29 @@ struct TraitSet {
 }
 
 impl TraitSet {
+    /// Attempts to parse doc-comments from the trait attributes
+    /// and returns the results as a single string.
+    /// If multiple doc-comments were provided (e.g. with `///` and `#[doc]`),
+    /// they will be joined with a newline.
+    fn parse_doc(attrs: &[Attribute]) -> Result<Option<String>> {
+        let mut out = String::new();
+
+        for attr in attrs {
+            // Check whether current attribute is `#[doc = "..."]`.
+            if let Meta::NameValue(MetaNameValue { path, lit, .. }) = attr.parse_meta()? {
+                if let Some(path_ident) = path.get_ident() {
+                    if path_ident == "doc" {
+                        if let Lit::Str(doc_comment) = lit {
+                            out += &doc_comment.value();
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(if !out.is_empty() { Some(out) } else { None })
+    }
+
     /// Renders trait alias into a new trait with bounds set.
     fn render(self) -> TokenStream2 {
         // Generic and non-generic implementation have slightly different
@@ -70,7 +95,9 @@ impl TraitSet {
         let visibility = self.visibility;
         let alias_name = self.alias_name;
         let bounds = self.traits.bounds;
+        let doc_comment = self.doc_comment.map(|val| quote! { #[doc = #val] });
         quote! {
+            #doc_comment
             #visibility trait #alias_name: #bounds {}
 
             impl<_INNER> #alias_name for _INNER where _INNER: #bounds {}
@@ -82,6 +109,7 @@ impl TraitSet {
         let visibility = self.visibility;
         let alias_name = self.alias_name;
         let bounds = self.traits.bounds;
+        let doc_comment = self.doc_comment.map(|val| quote! { #[doc = #val] });
 
         // We differentiate `generics` and `bound_generics` because in the
         // `impl<X> Trait<Y>` block there must be no trait bounds in the `<Y>` part,
@@ -102,6 +130,7 @@ impl TraitSet {
         // generics, because generics can contain lifetimes, and lifetimes
         // should always go first.
         quote! {
+            #doc_comment
             #visibility trait #alias_name<#bound_generics>: #bounds {}
 
             impl<#bound_generics, _INNER> #alias_name<#unbound_generics> for _INNER where _INNER: #bounds {}
@@ -111,7 +140,9 @@ impl TraitSet {
 
 impl Parse for TraitSet {
     fn parse(input: ParseStream) -> Result<Self> {
+        let attrs: Vec<Attribute> = input.call(Attribute::parse_outer)?;
         let result = TraitSet {
+            doc_comment: Self::parse_doc(&attrs)?,
             visibility: input.parse()?,
             _trait_token: input.parse()?,
             alias_name: input.parse()?,
