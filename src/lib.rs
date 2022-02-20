@@ -191,6 +191,7 @@ impl ManyTraitSet {
 /// use trait_set::trait_set;
 ///
 /// trait_set! {
+///     /// Doc-comments are also supported btw.
 ///     pub trait ThreadSafe = Send + Sync;
 ///     pub trait ThreadSafeIterator<T> = ThreadSafe + Iterator<Item = T>;
 ///     pub trait ThreadSafeBytesIterator = ThreadSafeIterator<u8>;

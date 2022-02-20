@@ -46,6 +46,7 @@ use trait_set::trait_set;
 
 trait_set! {
     // Simple combination of two traits.
+    /// Doc-comments are also supported btw.
     pub trait ThreadSafe = Send + Sync;
 
     // Generic alias that gets passed to the associated type.
