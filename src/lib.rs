@@ -69,6 +69,9 @@ impl TraitSet {
                     if path_ident == "doc" {
                         if let Lit::Str(doc_comment) = lit {
                             out += &doc_comment.value();
+                            // Newlines are not included in the literal value,
+                            // so we have to add them manually.
+                            out.push('\n');
                         }
                     }
                 }
