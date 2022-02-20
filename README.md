@@ -36,6 +36,7 @@ as
 [visibility] trait [AliasName][<generics>] = [Element1] + [Element2] + ... + [ElementN];
 ```
 
+[`trait_set`]: https://docs.rs/trait-set/latest/trait_set/macro.trait_set.html
 [alias]: https://doc.rust-lang.org/unstable-book/language-features/trait-alias.html
 [tracking_issue]: https://github.com/rust-lang/rust/issues/41517
 
