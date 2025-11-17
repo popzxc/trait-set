@@ -39,7 +39,7 @@ use syn::{
     parse_macro_input,
     punctuated::Punctuated,
     spanned::Spanned,
-    Attribute, GenericParam, Generics, Ident, Lit, Meta, MetaNameValue, Result, Token,
+    Attribute, Expr, GenericParam, Generics, Ident, Lit, Meta, MetaNameValue, Result, Token,
     TypeTraitObject, Visibility,
 };
 
@@ -65,8 +65,12 @@ impl TraitSet {
         for attr in attrs {
             // Check whether current attribute is `#[doc = "..."]`.
             // NOTE: These can be simplified to let-else since rust 1.65
-            let MetaNameValue { path, lit, .. } = match attr.parse_meta()? {
+            let MetaNameValue { path, value, .. } = match &attr.meta {
                 Meta::NameValue(meta) => meta,
+                _ => continue,
+            };
+            let lit = match value {
+                Expr::Lit(lit) => lit,
                 _ => continue,
             };
             let path_ident = match path.get_ident() {
@@ -76,7 +80,7 @@ impl TraitSet {
             if path_ident != "doc" {
                 continue;
             }
-            let doc_comment = match lit {
+            let doc_comment = match &lit.lit {
                 Lit::Str(doc_comment) => doc_comment,
                 _ => continue,
             };
@@ -183,7 +187,7 @@ struct ManyTraitSet {
 impl Parse for ManyTraitSet {
     fn parse(input: ParseStream) -> Result<Self> {
         Ok(ManyTraitSet {
-            entries: input.parse_terminated(TraitSet::parse)?,
+            entries: input.parse_terminated(TraitSet::parse, Token![;])?,
         })
     }
 }
