@@ -64,18 +64,26 @@ impl TraitSet {
 
         for attr in attrs {
             // Check whether current attribute is `#[doc = "..."]`.
-            if let Meta::NameValue(MetaNameValue { path, lit, .. }) = attr.parse_meta()? {
-                if let Some(path_ident) = path.get_ident() {
-                    if path_ident == "doc" {
-                        if let Lit::Str(doc_comment) = lit {
-                            out += &doc_comment.value();
-                            // Newlines are not included in the literal value,
-                            // so we have to add them manually.
-                            out.push('\n');
-                        }
-                    }
-                }
+            // NOTE: These can be simplified to let-else since rust 1.65
+            let MetaNameValue { path, lit, .. } = match attr.parse_meta()? {
+                Meta::NameValue(meta) => meta,
+                _ => continue,
+            };
+            let path_ident = match path.get_ident() {
+                Some(path_ident) => path_ident,
+                None => continue,
+            };
+            if path_ident != "doc" {
+                continue;
             }
+            let doc_comment = match lit {
+                Lit::Str(doc_comment) => doc_comment,
+                _ => continue,
+            };
+            out += &doc_comment.value();
+            // Newlines are not included in the literal value,
+            // so we have to add them manually.
+            out.push('\n');
         }
 
         Ok(if !out.is_empty() { Some(out) } else { None })
