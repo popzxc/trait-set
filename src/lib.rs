@@ -128,10 +128,13 @@ impl TraitSet {
         // E.g. `impl<X: Send, _INNER> Trait<X> for _INNER`.
         let mut unbound_generics = self.generics.clone();
         for param in unbound_generics.params.iter_mut() {
-            if let GenericParam::Type(ty) = param {
-                if !ty.bounds.is_empty() {
-                    ty.bounds.clear();
-                }
+            // NOTE: Thes can be simplified to let-else since rust 1.65
+            let ty = match param {
+                GenericParam::Type(ty) => ty,
+                _ => continue,
+            };
+            if !ty.bounds.is_empty() {
+                ty.bounds.clear();
             }
         }
         let unbound_generics = unbound_generics.params;
