@@ -39,7 +39,7 @@ use syn::{
     parse_macro_input,
     punctuated::Punctuated,
     spanned::Spanned,
-    Attribute, GenericParam, Generics, Ident, Lit, Meta, MetaNameValue, Result, Token,
+    Attribute, Expr, GenericParam, Generics, Ident, Lit, Meta, MetaNameValue, Result, Token,
     TypeTraitObject, Visibility,
 };
 
@@ -64,10 +64,15 @@ impl TraitSet {
 
         for attr in attrs {
             // Check whether current attribute is `#[doc = "..."]`.
-            if let Meta::NameValue(MetaNameValue { path, lit, .. }) = attr.parse_meta()? {
+            if let Meta::NameValue(MetaNameValue {
+                path,
+                value: Expr::Lit(lit),
+                ..
+            }) = &attr.meta
+            {
                 if let Some(path_ident) = path.get_ident() {
                     if path_ident == "doc" {
-                        if let Lit::Str(doc_comment) = lit {
+                        if let Lit::Str(doc_comment) = &lit.lit {
                             out += &doc_comment.value();
                             // Newlines are not included in the literal value,
                             // so we have to add them manually.
@@ -172,7 +177,7 @@ struct ManyTraitSet {
 impl Parse for ManyTraitSet {
     fn parse(input: ParseStream) -> Result<Self> {
         Ok(ManyTraitSet {
-            entries: input.parse_terminated(TraitSet::parse)?,
+            entries: input.parse_terminated(TraitSet::parse, Token![;])?,
         })
     }
 }
