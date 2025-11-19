@@ -53,7 +53,7 @@ jobs:
       matrix:
         toolchain:
           - stable
-          - 1.56.0 # MSRV
+          - 1.76.0 # MSRV
           - nightly-2025-11-02 # locked nightly
 
     steps:

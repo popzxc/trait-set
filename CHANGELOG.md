@@ -5,7 +5,7 @@
 ## Version 0.4.0 (2025-11-19)
 
 - Migrated to syn 2.0
-- Bumped MSRV to 1.56.0
+- Bumped MSRV to 1.76.0
 
 ## Version 0.3.0 (2022-02-20)
 
