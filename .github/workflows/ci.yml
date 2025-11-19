@@ -56,11 +56,8 @@ jobs:
       - name: Install deadlinks
         run: cargo install cargo-deadlinks
 
-      - name: Cargo doc
-        run: cargo doc --no-deps
-
       - name: Run deadlinks
-        run: cargo deadlinks --dir target/doc
+        run: cargo deadlinks
 
   test:
     name: Test
