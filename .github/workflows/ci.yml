@@ -5,10 +5,6 @@ on:
     branches:
      - '*'
 
-env:
-  msrv: 1.56.0
-  nightly: nightly-2025-11-02
-
 jobs:
   lints:
     name: Rustfmt
@@ -55,7 +51,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        toolchain: [stable, ${{ env.msrv }}, ${{ env.nightly }}]
+        toolchain:
+          - stable
+          - 1.56.0 # MSRV
+          - nightly-2025-11-02 # locked nightly
 
     steps:
       - name: Checkout sources
@@ -68,4 +67,3 @@ jobs:
 
       - name: Run tests
         run: cargo test
-
