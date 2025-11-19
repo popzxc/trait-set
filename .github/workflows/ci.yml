@@ -5,38 +5,30 @@ on:
     branches:
      - '*'
 
+env:
+  msrv: 1.56.0
+  nightly: nightly-2025-11-02
+
 jobs:
-  fmt:
+  lints:
     name: Rustfmt
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - run: rustup component add clippy
-
-      - name: Run rustfmt
-        uses: actions-rs/cargo@v1
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
         with:
-          command: fmt
-          args: --all -- --check
+          toolchain: stable
 
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
+      - name: Run fmt
+        run: cargo fmt --all -- --check
 
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
+      - name: Clippy
+        run: cargo clippy --workspace --all-features --all-targets -- -D warnings
 
-      - run: rustup component add clippy
-
-      - name: Run clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: -- -D warnings
 
   deadlinks:
     name: Deadlinks
@@ -44,14 +36,12 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Install rust
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          profile: minimal
-          override: true
 
       - name: Install deadlinks
         run: cargo install cargo-deadlinks
@@ -59,24 +49,23 @@ jobs:
       - name: Run deadlinks
         run: cargo deadlinks
 
+
   test:
-    name: Test
+    name: Test (${{ matrix.toolchain }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: [stable, ${{ env.msrv }}, ${{ env.nightly }}]
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - run: rustup component add clippy
-
-      - name: Build
-        uses: actions-rs/cargo@v1
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
         with:
-          command: build
-          args: --examples --all
+          toolchain: ${{ matrix.toolchain }}
 
-      - name: Test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all
+      - name: Run tests
+        run: cargo test
+

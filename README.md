@@ -7,7 +7,7 @@
 [![Docs.rs](https://docs.rs/trait-set/badge.svg)](https://docs.rs/trait-set)
 [![Latest Version](https://img.shields.io/crates/v/trait-set.svg)](https://crates.io/crates/trait-set)
 [![License](https://img.shields.io/github/license/popzxc/trait-set.svg)](https://github.com/popzxc/trait-set)
-![Rust 1.50+ required](https://img.shields.io/badge/rust-1.50+-blue.svg?label=Rust)
+![Rust 1.56+ required](https://img.shields.io/badge/rust-1.50+-blue.svg?label=Rust)
 
 Support for trait aliases on stable Rust.
 
