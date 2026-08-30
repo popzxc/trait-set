@@ -39,8 +39,8 @@ use syn::{
     parse_macro_input,
     punctuated::Punctuated,
     spanned::Spanned,
-    Attribute, Expr, GenericParam, Generics, Ident, Lit, Meta, MetaNameValue, Result, Token,
-    TypeTraitObject, Visibility,
+    Attribute, Expr, Generics, Ident, Lit, Meta, MetaNameValue, Result, Token, TypeTraitObject,
+    Visibility,
 };
 
 /// Represents one trait alias.
@@ -118,30 +118,27 @@ impl TraitSet {
         let alias_name = self.alias_name;
         let bounds = self.traits.bounds;
         let doc_comment = self.doc_comment.map(|val| quote! { #[doc = #val] });
+        let generics = self.generics;
 
-        // We differentiate `generics` and `bound_generics` because in the
-        // `impl<X> Trait<Y>` block there must be no trait bounds in the `<Y>` part,
-        // they must go into `<X>` part only.
-        // E.g. `impl<X: Send, _INNER> Trait<X> for _INNER`.
-        let mut unbound_generics = self.generics.clone();
-        for param in unbound_generics.params.iter_mut() {
-            if let GenericParam::Type(ty) = param {
-                if !ty.bounds.is_empty() {
-                    ty.bounds.clear();
-                }
-            }
-        }
-        let unbound_generics = unbound_generics.params;
-        let bound_generics = self.generics.params;
+        // Syn owns the distinction between parameter declarations (`T: Send`,
+        // `const N: usize`) and their use as arguments (`T`, `N`). Besides
+        // preserving every supported generic form, `split_for_impl` removes
+        // defaults where Rust forbids them in an impl declaration.
+        let mut implementation_generics = generics.clone();
+        implementation_generics
+            .params
+            .push(syn::parse_quote!(__TRAIT_SET_INNER));
+        let (implementation_generics, _, _) = implementation_generics.split_for_impl();
+        let (_, alias_generics, _) = generics.split_for_impl();
 
-        // Note that it's important for `_INNER` to go *after* user-defined
-        // generics, because generics can contain lifetimes, and lifetimes
-        // should always go first.
         quote! {
             #doc_comment
-            #visibility trait #alias_name<#bound_generics>: #bounds {}
+            #visibility trait #alias_name #generics: #bounds {}
 
-            impl<#bound_generics, _INNER> #alias_name<#unbound_generics> for _INNER where _INNER: #bounds {}
+            impl #implementation_generics #alias_name #alias_generics for __TRAIT_SET_INNER
+            where
+                __TRAIT_SET_INNER: #bounds
+            {}
         }
     }
 }
