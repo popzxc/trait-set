@@ -2,7 +2,7 @@
 
 ## Version 0.x.y (202x-xx-xx)
 
-## Version 0.4.0 (2025-11-19)
+## Version 0.4.0 (2026-08-30)
 
 - Migrated to syn 2.0
 - Bumped MSRV to 1.76.0
