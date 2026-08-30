@@ -13,12 +13,12 @@ Support for trait aliases on stable Rust.
 
 ## Description
 
-This crate provide support for [trait aliases][alias]: a feature
-that is already supported by Rust compiler, but is [not stable][tracking_issue]
+This crate provides support for [trait aliases][alias]: a feature
+that is already supported by the Rust compiler, but is [not stable][tracking_issue]
 yet.
 
-The idea is simple: combine group of traits under a single name. The simplest
-example will be:
+The idea is simple: combine a group of traits under a single name. The simplest
+example is:
 
 ```rust
 use trait_set::trait_set;
@@ -28,9 +28,9 @@ trait_set! {
 }
 ```
 
-Macro [`trait_set`] displayed here is the main entity of the crate:
-it allows declaring multiple trait aliases, each of them is represented
-as
+The [`trait_set`] macro displayed here is the main entity of the crate:
+it allows declaring multiple trait aliases, each of which is represented
+as:
 
 ```text
 [visibility] trait [AliasName][<generics>] = [Element1] + [Element2] + ... + [ElementN];
@@ -47,7 +47,7 @@ use trait_set::trait_set;
 
 trait_set! {
     // Simple combination of two traits.
-    /// Doc-comments are also supported btw.
+    /// Doc comments are also supported, btw.
     pub trait ThreadSafe = Send + Sync;
 
     // Generic alias that gets passed to the associated type.
@@ -64,7 +64,7 @@ trait_set! {
 
     // Lifetime as a generic parameter.
     pub trait SerdeLifetimeTemplate<'de> = Serialize + Deserialize<'de>;
-    
+
     // Trait bounds on generic parameters for an alias.
     pub trait GenericIteratorSendableT<T: Send> = Iterator<Item = T>;
 }
@@ -72,11 +72,11 @@ trait_set! {
 
 ## Motivation
 
-Rust is great, and it becomes even better through time. However, a time gap between proposing
+Rust is great, and it becomes even better over time. However, the time gap between proposing
 a new feature and getting it stabilized is way too big.
 
-Trait aliases is a great example: 20% of functionality will serve the needs of 80%.
-So, until they are stabilized, this crate hopefully will allow some folks to write more readable code.
+Trait aliases are a great example: 20% of the functionality will serve the needs of 80%.
+So, until they are stabilized, this crate will hopefully allow some folks to write more readable code.
 
 ## Contributing
 
@@ -84,4 +84,4 @@ Feel free to submit a PR!
 
 ## LICENSE
 
-`trait-set` library is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+The `trait-set` library is licensed under the MIT License. See [LICENSE](LICENSE) for details.

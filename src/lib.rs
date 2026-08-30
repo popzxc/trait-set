@@ -1,9 +1,9 @@
-//! This crate provide support for [trait aliases][alias]: a feature
-//! that is already supported by Rust compiler, but is [not stable][tracking_issue]
+//! This crate provides support for [trait aliases][alias]: a feature
+//! that is already supported by the Rust compiler, but is [not stable][tracking_issue]
 //! yet.
 //!
-//! The idea is simple: combine group of traits under a single name. The simplest
-//! example will be:
+//! The idea is simple: combine a group of traits under a single name. The simplest
+//! example is:
 //!
 //! ```rust
 //! use trait_set::trait_set;
@@ -13,9 +13,9 @@
 //! }
 //! ```
 //!
-//! Macro [`trait_set`] displayed here is the main entity of the crate:
-//! it allows declaring multiple trait aliases, each of them is represented
-//! as
+//! The [`trait_set`] macro displayed here is the main entity of the crate:
+//! it allows declaring multiple trait aliases, each of which is represented
+//! as:
 //!
 //! ```text
 //! [visibility] trait [AliasName][<generics>] = [Element1] + [Element2] + ... + [ElementN];
@@ -100,11 +100,11 @@ impl TraitSet {
         })
     }
 
-    /// Renders trait alias into a new trait with bounds set.
+    /// Renders a trait alias into a new trait with bounds set.
     fn render(self) -> TokenStream2 {
-        // Generic and non-generic implementation have slightly different
+        // Generic and non-generic implementations have slightly different
         // syntax, so it's simpler to process them individually rather than
-        // try to generalize implementation.
+        // try to generalize the implementation.
         if self.generics.params.is_empty() {
             self.render_non_generic()
         } else {
@@ -186,7 +186,7 @@ impl Parse for TraitSet {
     }
 }
 
-/// Represents a sequence of trait aliases delimited by semicolon.
+/// Represents a sequence of trait aliases delimited by semicolons.
 struct ManyTraitSet {
     entries: Punctuated<TraitSet, Token![;]>,
 }
@@ -205,7 +205,7 @@ impl ManyTraitSet {
     }
 }
 
-/// Creates an alias for set of traits.
+/// Creates an alias for a set of traits.
 ///
 /// To demonstrate the idea, see the examples:
 ///
@@ -213,15 +213,15 @@ impl ManyTraitSet {
 /// use trait_set::trait_set;
 ///
 /// trait_set! {
-///     /// Doc-comments are also supported btw.
+///     /// Doc comments are also supported, btw.
 ///     pub trait ThreadSafe = Send + Sync;
 ///     pub trait ThreadSafeIterator<T> = ThreadSafe + Iterator<Item = T>;
 ///     pub trait ThreadSafeBytesIterator = ThreadSafeIterator<u8>;
 ///     pub trait StaticDebug = 'static + std::fmt::Debug;
 /// }
-///```
+/// ```
 ///
-/// This macro also supports [higher-rank trait bound][hrtb]:
+/// This macro also supports [higher-rank trait bounds][hrtb]:
 ///
 /// ```rust
 /// # pub trait Serializer {
@@ -278,9 +278,9 @@ impl ManyTraitSet {
 /// # }
 /// use trait_set::trait_set;
 ///
-/// trait_set!{
+/// trait_set! {
 ///     pub trait Serde = Serialize + for<'de> Deserialize<'de>;
-///     // Note that you can also use lifetimes as a generic parameter.
+///     // Note that you can also use a lifetime as a generic parameter.
 ///     pub trait SerdeLifetimeTemplate<'de> = Serialize + Deserialize<'de>;
 /// }
 /// ```
