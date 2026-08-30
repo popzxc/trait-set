@@ -39,13 +39,13 @@ use syn::{
     parse_macro_input,
     punctuated::Punctuated,
     spanned::Spanned,
-    Attribute, Expr, Generics, Ident, Lit, Meta, MetaNameValue, Result, Token, TypeTraitObject,
-    Visibility,
+    Attribute, Generics, Ident, Meta, Result, Token, TypeTraitObject, Visibility,
 };
 
 /// Represents one trait alias.
 struct TraitSet {
-    doc_comment: Option<String>,
+    attributes: Vec<Attribute>,
+    implementation_attributes: Vec<Attribute>,
     visibility: Visibility,
     _trait_token: Token![trait],
     alias_name: Ident,
@@ -55,35 +55,51 @@ struct TraitSet {
 }
 
 impl TraitSet {
-    /// Attempts to parse doc-comments from the trait attributes
-    /// and returns the results as a single string.
-    /// If multiple doc-comments were provided (e.g. with `///` and `#[doc]`),
-    /// they will be joined with a newline.
-    fn parse_doc(attrs: &[Attribute]) -> Result<Option<String>> {
-        let mut out = String::new();
+    /// Selects configuration attributes that must also guard the generated
+    /// implementation. Other attributes describe the user-facing trait and
+    /// may not be valid on a trait implementation.
+    fn implementation_attributes(attributes: &[Attribute]) -> Result<Vec<Attribute>> {
+        attributes
+            .iter()
+            .map(|attribute| Self::configuration_meta(&attribute.meta))
+            .filter_map(Result::transpose)
+            .map(|meta| meta.map(|meta| syn::parse_quote!(#[#meta])))
+            .collect()
+    }
 
-        for attr in attrs {
-            // Check whether current attribute is `#[doc = "..."]`.
-            if let Meta::NameValue(MetaNameValue {
-                path,
-                value: Expr::Lit(lit),
-                ..
-            }) = &attr.meta
-            {
-                if let Some(path_ident) = path.get_ident() {
-                    if path_ident == "doc" {
-                        if let Lit::Str(doc_comment) = &lit.lit {
-                            out += &doc_comment.value();
-                            // Newlines are not included in the literal value,
-                            // so we have to add them manually.
-                            out.push('\n');
-                        }
-                    }
-                }
-            }
+    /// Retains only the item-existence part of an attribute. In particular,
+    /// `cfg_attr` can contain attributes such as `deprecated` that belong on
+    /// the trait but would be rejected on its blanket implementation.
+    fn configuration_meta(meta: &Meta) -> Result<Option<Meta>> {
+        if meta.path().is_ident("cfg") {
+            return Ok(Some(meta.clone()));
+        }
+        if !meta.path().is_ident("cfg_attr") {
+            return Ok(None);
         }
 
-        Ok(if !out.is_empty() { Some(out) } else { None })
+        let Meta::List(list) = meta else {
+            return Err(Error::new(meta.span(), "expected `cfg_attr(...)`"));
+        };
+        let arguments = list.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
+        let mut arguments = arguments.iter();
+        let Some(predicate) = arguments.next() else {
+            return Err(Error::new(meta.span(), "missing `cfg_attr` predicate"));
+        };
+        let configuration_attributes = arguments
+            .map(Self::configuration_meta)
+            .collect::<Result<Vec<_>>>()?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
+
+        Ok(if configuration_attributes.is_empty() {
+            None
+        } else {
+            Some(syn::parse_quote! {
+                cfg_attr(#predicate, #(#configuration_attributes),*)
+            })
+        })
     }
 
     /// Renders trait alias into a new trait with bounds set.
@@ -100,24 +116,27 @@ impl TraitSet {
 
     /// Renders the trait alias without generic parameters.
     fn render_non_generic(self) -> TokenStream2 {
+        let attributes = self.attributes;
+        let implementation_attributes = self.implementation_attributes;
         let visibility = self.visibility;
         let alias_name = self.alias_name;
         let bounds = self.traits.bounds;
-        let doc_comment = self.doc_comment.map(|val| quote! { #[doc = #val] });
         quote! {
-            #doc_comment
+            #(#attributes)*
             #visibility trait #alias_name: #bounds {}
 
+            #(#implementation_attributes)*
             impl<_INNER> #alias_name for _INNER where _INNER: #bounds {}
         }
     }
 
     /// Renders the trait alias with generic parameters.
     fn render_generic(self) -> TokenStream2 {
+        let attributes = self.attributes;
+        let implementation_attributes = self.implementation_attributes;
         let visibility = self.visibility;
         let alias_name = self.alias_name;
         let bounds = self.traits.bounds;
-        let doc_comment = self.doc_comment.map(|val| quote! { #[doc = #val] });
         let generics = self.generics;
 
         // Syn owns the distinction between parameter declarations (`T: Send`,
@@ -132,9 +151,10 @@ impl TraitSet {
         let (_, alias_generics, _) = generics.split_for_impl();
 
         quote! {
-            #doc_comment
+            #(#attributes)*
             #visibility trait #alias_name #generics: #bounds {}
 
+            #(#implementation_attributes)*
             impl #implementation_generics #alias_name #alias_generics for __TRAIT_SET_INNER
             where
                 __TRAIT_SET_INNER: #bounds
@@ -145,9 +165,11 @@ impl TraitSet {
 
 impl Parse for TraitSet {
     fn parse(input: ParseStream) -> Result<Self> {
-        let attrs: Vec<Attribute> = input.call(Attribute::parse_outer)?;
+        let attributes = input.call(Attribute::parse_outer)?;
+        let implementation_attributes = Self::implementation_attributes(&attributes)?;
         let result = TraitSet {
-            doc_comment: Self::parse_doc(&attrs)?,
+            attributes,
+            implementation_attributes,
             visibility: input.parse()?,
             _trait_token: input.parse()?,
             alias_name: input.parse()?,
