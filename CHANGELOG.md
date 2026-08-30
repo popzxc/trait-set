@@ -1,6 +1,11 @@
 # Changelog
 
-## Version 0.x.y (202x-xx-xx)
+## Version 0.5.0 (2026-08-30)
+
+- Migrated to syn 3.0
+- Fixed generic aliases with const generics, lifetime bounds, and default parameters
+- Preserved outer attributes, including `cfg` and `cfg_attr`
+- Migrated to Rust 2021 and modernized CI
 
 ## Version 0.4.0 (2026-08-30)
 
