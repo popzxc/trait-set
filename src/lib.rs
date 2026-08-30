@@ -27,8 +27,6 @@
 //! [tracking_issue]: https://github.com/rust-lang/rust/issues/41517
 //! [`trait_set`]: macro.trait_set.html
 
-extern crate proc_macro;
-
 use std::iter::FromIterator;
 
 use proc_macro::TokenStream;
