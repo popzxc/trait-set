@@ -1,9 +1,14 @@
 name: CI
 
 on:
-  pull_request:
+  push:
     branches:
-     - '*'
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   lints:
@@ -12,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
@@ -23,7 +28,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-targets -- -D warnings
 
 
   deadlinks:
@@ -32,7 +37,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
@@ -47,18 +52,18 @@ jobs:
 
 
   build:
-    name: Test (${{ matrix.toolchain }})
+    name: Build (${{ matrix.toolchain }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
         toolchain:
           - stable
           - 1.76.0 # MSRV
-          - nightly-2025-11-02 # locked nightly
+          - nightly
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
@@ -75,7 +80,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
